@@ -37,66 +37,21 @@
         #drawing-canvas { touch-action:none; background-color:white; border:4px solid #796833; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.1); }
         .achievement-locked { opacity:0.4; filter:grayscale(0.7); }
 
-        #drag-drop-editor-section {
-            display: flex;
-            gap: 20px;
-            margin-top: 24px;
-            padding: 24px;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            min-height: 550px;
-            flex-wrap: wrap;
-        }
-        #palette {
-            width: 150px; padding: 10px; background: #f3f3f3;
-            border: 2px solid #ccc; border-radius: 6px;
-        }
-        #palette div {
-            padding: 8px; margin: 6px 0; background: #ffe79a;
-            border: 1px solid #c9a534; cursor: grab; text-align: center;
-            border-radius: 6px;
-        }
-        #canvas {
-            flex: 1; min-height: 400px; border: 3px dashed #aaa;
-            position: relative; background: white;
-            min-width: 300px;
-            overflow: hidden;
-        }
-        .draggable {
-            position: absolute; padding: 10px;
-            border: 1px solid #c7a04b;
-            cursor: move; border-radius: 6px;
-            box-sizing: border-box;
-            background-color: transparent;
-        }
-        .selected { outline: 2px solid dodgerblue; }
-
-        .handle {
-            width: 10px; height: 10px; background: dodgerblue;
-            position: absolute; right: -5px; bottom: -5px;
-            cursor: se-resize; border-radius: 3px;
-        }
-
-        #controls {
-            width: 200px; padding: 10px; background: #fefefe;
-            border: 2px solid #ddd; border-radius: 6px;
-        }
-        #code-box {
-            flex-basis: 100%;
-            height: 200px;
-            border: 2px solid #888;
-            font-family: monospace; padding: 10px; white-space: pre;
-            resize: vertical;
-            margin-top: 20px;
-        }
+        .winter-theme { background-color: #e0f2fe !important; }
+        .winter-header { background-color: #f0f9ff !important; border: 4px solid #bae6fd !important; position: relative; overflow: hidden; }
+        .winter-text-gold { color: #0369a1 !important; }
+        
+        .snowflakes { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+        .snowflake { color: #fff; font-size: 1.2em; position: fixed; top: -10%; user-select: none; cursor: default; animation-name: snowflakes-fall, snowflakes-shake; animation-duration: 10s, 3s; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, infinite; animation-play-state: running, running; }
+        @keyframes snowflakes-fall { 0% { top: -10%; } 100% { top: 100%; } }
+        @keyframes snowflakes-shake { 0% { transform: translateX(0px); } 50% { transform: translateX(80px); } 100% { transform: translateX(0px); } }
     </style>
 </head>
 <body class="bg-[#d3c865] min-h-screen p-4 md:p-8">
 
-    <header class="Header bg-[#f4e1a1] p-6 rounded-xl shadow-2xl mb-8">
+    <header id="main-header" class="Header bg-[#f4e1a1] p-6 rounded-xl shadow-2xl mb-8">
         <h1 class="text-5xl font-extrabold text-[#fffff0] text-outline mb-2">Bread-Games</h1>
-        <h3 class="text-xl font-semibold text-gold mb-4">Created by Ethan Taylor</h3>
+        <h3 id="author-text" class="text-xl font-semibold text-gold mb-4">Created by Ethan Taylor</h3>
         <a href="https://youtube.com/@cocacolaplayz" class="YT text-lg font-bold text-red-outline transition duration-300 hover:scale-105 inline-block">
             Owner's Social Media
         </a>
@@ -150,54 +105,37 @@
         <div id="game-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         </div>
 
-        <section id="drag-drop-editor-section" class="mt-12 p-6 md:p-10 bg-white rounded-xl shadow-2xl">
-            <h2 class="text-4xl font-bold text-gray-800 mb-6 text-center border-b pb-4 w-full">🎨 Bread Game Visual Editor</h2>
+        <section id="game-editor-section" class="mt-12 p-6 md:p-10 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-4xl font-bold text-gray-800 mb-6 text-center border-b pb-4">🕹️ Bread Game Studio (HTML/JS)</h2>
+            <p class="text-gray-600 mb-6">Write your game code using only HTML, CSS, and JavaScript. The entire game must be self-contained in this single block of HTML.</p>
 
-            <div class="w-full mb-6">
-                <label for="game-title-input-dd" class="block text-lg font-semibold text-gray-700 mb-2">Game Title</label>
-                <input type="text" id="game-title-input-dd" placeholder="My Awesome Drag-Drop Game" class="w-full p-3 border border-gray-400 rounded-lg text-lg">
+            <label for="game-title-input" class="block text-lg font-semibold text-gray-700 mb-2">Game Title</label>
+            <input type="text" id="game-title-input" placeholder="My Awesome Bread Game" class="w-full p-3 border border-gray-400 rounded-lg text-lg mb-4">
+
+            <label for="thumbnail-upload" class="block text-lg font-semibold text-gray-700 mb-2">Thumbnail (optional)</label>
+            <div class="flex gap-2 items-center mb-4">
+                <input type="file" id="thumbnail-upload" accept="image/*" class="block">
+                <button id="use-avatar-thumbnail-btn" class="bg-yellow-600 text-white font-bold py-2 px-3 rounded-md hover:bg-yellow-700 transition">Use Avatar as Thumbnail</button>
+                <div id="thumbnail-preview-container" class="w-16 h-16 border rounded-md overflow-hidden">
+                </div>
             </div>
 
-            <div id="palette">
-                <strong>Add Element</strong>
-                <div draggable="true" data-type="button">Button</div>
-                <div draggable="true" data-type="text">Text</div>
-                <div draggable="true" data-type="box">Box</div>
-            </div>
+            <label for="game-code-input" class="block text-lg font-semibold text-gray-700 mb-2">Game Code (HTML/JS/CSS)</label>
+            <textarea id="game-code-input" class="w-full p-4 border-2 border-gray-400 rounded-lg text-sm bg-gray-50" placeholder=""></textarea>
 
-            <div id="canvas"></div>
-
-            <div id="controls">
-                <h3>Element Controls</h3>
-                <label>Color:<br><input type="color" id="color-picker-dd" value="#fff1c7"></label>
-                <label class="mt-4 block">Font Family:<br>
-                    <select id="font-family-dd" class="w-full p-2 border rounded">
-                        <option value="Inter, sans-serif">Inter (Default)</option>
-                        <option value="Arial, sans-serif">Arial</option>
-                        <option value="Verdana, sans-serif">Verdana</option>
-                        <option value="'Courier New', monospace">Courier New</option>
-                        <option value="'Times New Roman', serif">Times New Roman</option>
-                    </select>
-                </label>
-            </div>
-
-            <textarea id="code-box" placeholder="Your game's HTML will appear here. Edit it directly or use the canvas."></textarea>
-
-            <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
-                <button id="test-game-dd-btn" class="bg-blue-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-blue-700 transition duration-150">
-                    ▶️ Test Game
-                </button>
-                <button id="publish-game-dd-btn" class="bg-green-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-green-700 transition duration-150">
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button id="publish-game-btn" class="bg-green-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-green-700 transition duration-150">
                     ⬆️ Publish (Save Locally)
                 </button>
-                <button id="download-game-dd-btn" class="bg-red-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-red-700 transition duration-150">
+                <input type="file" id="import-game-file" accept=".bread" class="hidden" onchange="importGame(event)">
+                <button id="import-game-btn" class="bg-yellow-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-yellow-700 transition duration-150">
+                    📥 Import .Bread File
+                </button>
+                <button id="download-game-btn" class="bg-red-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-red-700 transition duration-150">
                     ⬇️ Download as .Bread
                 </button>
-                <button id="load-game-dd-btn" class="bg-yellow-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-yellow-700 transition duration-150">
-                    🔄 Load From Code Box
-                </button>
             </div>
-            <p id="studio-status-message" class="text-center font-medium h-4 mt-4 w-full"></p>
+            <p id="studio-status-message" class="text-center font-medium h-4 mt-4"></p>
         </section>
 
         <section id="creative-hub-section" class="mt-12 p-6 md:p-10 bg-white rounded-xl shadow-2xl max-w-4xl mx-auto">
@@ -278,6 +216,31 @@
         let stats = {};
         let achievements = {};
         let currentThumbnailDataURL = null;
+
+        function checkWinterSeason() {
+            const date = new Date();
+            const isDecember = date.getMonth() === 11;
+
+            if (isDecember) {
+                document.body.classList.add('winter-theme');
+                document.getElementById('main-header').classList.add('winter-header');
+                document.getElementById('author-text').classList.add('winter-text-gold');
+                
+                const snowflakeContainer = document.createElement('div');
+                snowflakeContainer.className = 'snowflakes';
+                snowflakeContainer.setAttribute('aria-hidden', 'true');
+                
+                for(let i = 0; i < 20; i++) {
+                    const flake = document.createElement('div');
+                    flake.className = 'snowflake';
+                    flake.innerHTML = '❅';
+                    flake.style.left = Math.random() * 100 + '%';
+                    flake.style.animationDelay = Math.random() * 10 + 's, ' + Math.random() * 3 + 's';
+                    snowflakeContainer.appendChild(flake);
+                }
+                document.body.appendChild(snowflakeContainer);
+            }
+        }
 
         function saveUserData() {
             localStorage.setItem(USERNAME_KEY, userData.username);
@@ -423,26 +386,9 @@
             });
         }
 
-        function wrapCodeInHtml(gameCode) {
-            return `<!DOCTYPE html>
-<html>
-<head>
-<style>
-    body { margin: 0; padding: 0; background: white; overflow: hidden; }
-    .draggable { position: absolute; padding: 10px; border-radius: 6px; box-sizing: border-box; }
-</style>
-</head>
-<body>
-    <div style="position: relative; width: 100vw; height: 100vh;">
-        ${gameCode}
-    </div>
-</body>
-</html>`;
-        }
-
-        function publishGameDD() {
-            const titleInput = document.getElementById('game-title-input-dd');
-            const codeInput = document.getElementById('code-box');
+        function publishGame() {
+            const titleInput = document.getElementById('game-title-input');
+            const codeInput = document.getElementById('game-code-input');
             const messageEl = document.getElementById('studio-status-message');
 
             const gameTitle = titleInput.value.trim();
@@ -451,7 +397,7 @@
             if (!gameTitle || !gameCode) {
                 messageEl.classList.remove('text-green-500');
                 messageEl.classList.add('text-red-500');
-                messageEl.textContent = 'Game Title and Code (from canvas/code box) cannot be empty!';
+                messageEl.textContent = 'Game Title and Code cannot be empty!';
                 setTimeout(() => messageEl.textContent = '', 3000);
                 return;
             }
@@ -459,14 +405,12 @@
             const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
             const gameId = `game-${Date.now()}`;
 
-            const fullGameHtml = wrapCodeInHtml(gameCode);
-
             games[gameId] = {
                 gameTitle: gameTitle,
-                gameCode: fullGameHtml,
+                gameCode: gameCode,
                 creatorUsername: userData.username,
                 publishedDate: new Date().toISOString(),
-                thumbnail: null
+                thumbnail: currentThumbnailDataURL || null
             };
 
             localStorage.setItem(PUBLISHED_GAMES_KEY, JSON.stringify(games));
@@ -482,34 +426,9 @@
             renderGameList();
         }
 
-        function testGameDD() {
-            const codeInput = document.getElementById('code-box');
-            const titleInput = document.getElementById('game-title-input-dd');
-            const messageEl = document.getElementById('studio-status-message');
-
-            const gameCode = codeInput.value.trim();
-            const gameTitle = titleInput.value.trim() || 'Untitled Game';
-
-            if (!gameCode) {
-                messageEl.classList.remove('text-green-500');
-                messageEl.classList.add('text-red-500');
-                messageEl.textContent = 'Game code cannot be empty to test!';
-                setTimeout(() => messageEl.textContent = '', 3000);
-                return;
-            }
-
-            const fullGameHtml = wrapCodeInHtml(gameCode);
-            launchRawCode(fullGameHtml, gameTitle);
-
-            messageEl.classList.remove('text-red-500');
-            messageEl.classList.add('text-green-500');
-            messageEl.textContent = `▶️ Launching test game: ${gameTitle}`;
-            setTimeout(() => messageEl.textContent = '', 3000);
-        }
-
-        function downloadGameDD() {
-            const titleInput = document.getElementById('game-title-input-dd');
-            const codeInput = document.getElementById('code-box');
+        function downloadGame() {
+            const titleInput = document.getElementById('game-title-input');
+            const codeInput = document.getElementById('game-code-input');
             const messageEl = document.getElementById('studio-status-message');
 
             const gameTitle = titleInput.value.trim();
@@ -529,7 +448,7 @@
                 creatorUsername: userData.username,
                 gameTitle: gameTitle,
                 gameCode: gameCode,
-                thumbnail: null
+                thumbnail: currentThumbnailDataURL || null
             };
 
             const jsonString = JSON.stringify(breadFileContent, null, 2);
@@ -576,16 +495,39 @@
                         return;
                     }
 
-                    document.getElementById('game-title-input-dd').value = content.gameTitle;
-                    document.getElementById('code-box').value = content.gameCode;
-                    
-                    updateCanvasFromCode();
+                    document.getElementById('game-title-input').value = content.gameTitle;
+                    document.getElementById('game-code-input').value = content.gameCode;
+
+                    if (content.thumbnail) {
+                        currentThumbnailDataURL = content.thumbnail;
+                        showThumbnailPreview(content.thumbnail);
+                    } else {
+                        currentThumbnailDataURL = null;
+                        showThumbnailPreview(null);
+                    }
+
+                    const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
+                    const gameId = `game-${Date.now()}`;
+
+                    games[gameId] = {
+                        gameTitle: content.gameTitle,
+                        gameCode: content.gameCode,
+                        creatorUsername: content.creatorUsername || "Unknown Creator",
+                        publishedDate: new Date().toISOString(),
+                        thumbnail: content.thumbnail || null
+                    };
+
+                    localStorage.setItem(PUBLISHED_GAMES_KEY, JSON.stringify(games));
+
+                    stats.gamesCreated = (stats.gamesCreated || 0) + 1;
+                    saveStats();
 
                     unlockAchievement('importedBreadFile');
+                    renderGameList();
 
                     messageEl.classList.remove('text-red-500');
                     messageEl.classList.add('text-green-500');
-                    messageEl.textContent = `⬆️ Game "${content.gameTitle}" imported! Click 'Publish' to save it locally.`;
+                    messageEl.textContent = `✅ Game "${content.gameTitle}" by ${content.creatorUsername} imported and published!`;
                 } catch (error) {
                     messageEl.classList.remove('text-green-500');
                     messageEl.classList.add('text-red-500');
@@ -776,7 +718,7 @@
         }
 
         function scrollToGameStudio() {
-            document.getElementById('drag-drop-editor-section').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('game-editor-section').scrollIntoView({ behavior: 'smooth' });
         }
 
         function loadAvatar() {
@@ -838,18 +780,6 @@
             setTimeout(() => messageEl.textContent = '', 3000);
         }
 
-        function launchRawCode(fullGameHtml, gameTitle) {
-            const gameFrame = document.getElementById('game-frame');
-            const gameContainer = document.getElementById('game-frame-container');
-
-            const dataUri = `data:text/html;charset=utf-8,${encodeURIComponent(fullGameHtml)}`;
-
-            gameFrame.src = dataUri;
-            gameContainer.style.display = 'flex';
-
-            document.title = gameTitle + ' - Bread-Games';
-        }
-
         function launchGame(gameId) {
             const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
             const gameData = games[gameId];
@@ -859,7 +789,15 @@
                 return;
             }
 
-            launchRawCode(gameData.gameCode, gameData.gameTitle);
+            const gameFrame = document.getElementById('game-frame');
+            const gameContainer = document.getElementById('game-frame-container');
+
+            const dataUri = `data:text/html;charset=utf-8,${encodeURIComponent(gameData.gameCode)}`;
+
+            gameFrame.src = dataUri;
+            gameContainer.style.display = 'flex';
+
+            document.title = gameData.gameTitle + ' - Bread-Games';
 
             stats.gamesPlayed = (stats.gamesPlayed || 0) + 1;
             saveStats();
@@ -877,6 +815,54 @@
             document.title = 'Bread-Games';
         }
 
+        const thumbnailInput = document.getElementById('thumbnail-upload');
+        const thumbnailPreviewContainer = document.getElementById('thumbnail-preview-container');
+        const useAvatarBtn = document.getElementById('use-avatar-thumbnail-btn');
+
+        function showThumbnailPreview(dataURL) {
+            const container = document.getElementById('thumbnail-preview-container');
+            container.innerHTML = '';
+            if (!dataURL) {
+                container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">No preview</div>';
+                return;
+            }
+            const img = document.createElement('img');
+            img.src = dataURL;
+            img.className = 'w-full h-full object-cover';
+            container.appendChild(img);
+        }
+
+        document.addEventListener('change', (e) => {
+            if (e.target && e.target.id === 'thumbnail-upload') {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    currentThumbnailDataURL = ev.target.result;
+                    showThumbnailPreview(currentThumbnailDataURL);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        (function attachUseAvatarBtn() {
+            const btn = document.getElementById('use-avatar-thumbnail-btn');
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                const avatar = localStorage.getItem(AVATAR_KEY);
+                if (avatar) {
+                    currentThumbnailDataURL = avatar;
+                    showThumbnailPreview(currentThumbnailDataURL);
+                } else {
+                    const messageEl = document.getElementById('studio-status-message');
+                    messageEl.classList.remove('text-green-500');
+                    messageEl.classList.add('text-red-500');
+                    messageEl.textContent = "No avatar set yet - draw and 'Set as Profile Avatar' first.";
+                    setTimeout(() => messageEl.textContent = '', 3000);
+                }
+            });
+        })();
+
         function escapeHtml(unsafe) {
             return unsafe
                  .replace(/&/g, "&amp;")
@@ -886,219 +872,10 @@
                  .replace(/'/g, "&#039;");
         }
 
-        const palette = document.getElementById("palette");
-        const canvasDD = document.getElementById("canvas");
-        const codeBox = document.getElementById("code-box");
-        const colorPickerDD = document.getElementById("color-picker-dd");
-        const FONT_FAMILY_DD = document.getElementById("font-family-dd");
-
-        let dragType = null;
-        let selected = null;
-
-        if (palette) {
-            palette.addEventListener("dragstart", (e) => {
-                dragType = e.target.dataset.type;
-            });
-        }
-
-        if (canvasDD) {
-            canvasDD.addEventListener("dragover", (e) => e.preventDefault());
-            canvasDD.addEventListener("drop", (e) => {
-                if (!dragType) return;
-                const el = createElement(dragType, e.offsetX, e.offsetY);
-                canvasDD.appendChild(el);
-                updateCode();
-                dragType = null;
-            });
-        }
-
-        function createElement(type, x, y) {
-            const el = document.createElement("div");
-            el.className = "draggable";
-            el.style.left = x + "px";
-            el.style.top = y + "px";
-            el.style.width = "100px";
-            el.style.height = "40px";
-            el.style.backgroundColor = colorPickerDD.value;
-            el.style.fontFamily = FONT_FAMILY_DD.value;
-            
-            if (type === "button") el.innerHTML = "Button";
-            if (type === "text") {
-                 el.innerHTML = "Editable Text";
-                 el.contentEditable = true;
-                 el.style.padding = "4px 8px";
-            }
-            if (type === "box") el.style.backgroundColor = colorPickerDD.value;
-
-            makeMovable(el);
-            addResizeHandle(el);
-            enableSelection(el);
-            return el;
-        }
-
-        function enableSelection(el) {
-            el.addEventListener("click", (e) => {
-                e.stopPropagation();
-                if (selected) selected.classList.remove("selected");
-                selected = el;
-                el.classList.add("selected");
-                
-                colorPickerDD.value = rgbToHex(el.style.backgroundColor || window.getComputedStyle(el).backgroundColor);
-
-                const currentFont = el.style.fontFamily || window.getComputedStyle(el).fontFamily;
-                let fontValueToSelect = currentFont.replace(/['"]/g, '');
-
-                let matchFound = false;
-                for (let i = 0; i < FONT_FAMILY_DD.options.length; i++) {
-                    const optionValue = FONT_FAMILY_DD.options[i].value.replace(/['"]/g, '');
-                    if (optionValue.toLowerCase().includes(fontValueToSelect.toLowerCase())) {
-                         FONT_FAMILY_DD.value = FONT_FAMILY_DD.options[i].value;
-                         matchFound = true;
-                         break;
-                    }
-                }
-                if (!matchFound) {
-                     FONT_FAMILY_DD.value = 'Inter, sans-serif'; 
-                }
-            });
-        }
-
-        document.body.addEventListener("click", () => {
-            if (selected) selected.classList.remove("selected");
-            selected = null;
-        });
-
-        if (colorPickerDD) {
-            colorPickerDD.addEventListener("input", () => {
-                if (selected) {
-                    selected.style.backgroundColor = colorPickerDD.value;
-                    updateCode();
-                }
-            });
-        }
-
-        if (FONT_FAMILY_DD) {
-            FONT_FAMILY_DD.addEventListener("change", () => {
-                if (selected) {
-                    selected.style.fontFamily = FONT_FAMILY_DD.value;
-                    updateCode();
-                }
-            });
-        }
-
-        function makeMovable(el) {
-            let offsetX, offsetY;
-
-            el.addEventListener("mousedown", (e) => {
-                if (e.target.classList.contains("handle")) return;
-                if (el.contentEditable === "true" && e.target === el) {
-                    return;
-                }
-
-                offsetX = e.offsetX;
-                offsetY = e.offsetY;
-
-                function move(ev) {
-                    if (!canvasDD) return;
-                    el.style.left = (ev.pageX - canvasDD.offsetLeft - offsetX) + "px";
-                    el.style.top = (ev.pageY - canvasDD.offsetTop - offsetY) + "px";
-                    updateCode();
-                    const rect = canvasDD.getBoundingClientRect();
-                    const w = parseInt(getComputedStyle(el).width);
-                    const h = parseInt(getComputedStyle(el).height);
-                    let left = parseInt(el.style.left);
-                    let top = parseInt(el.style.top);
-                    if (left < 0) el.style.left = "0px";
-                    if (top < 0) el.style.top = "0px";
-                    if (left + w > rect.width) el.style.left = (rect.width - w) + "px";
-                    if (top + h > rect.height) el.style.top = (rect.height - h) + "px";
-                }
-
-                window.addEventListener("mousemove", move);
-                window.addEventListener("mouseup", () => {
-                    window.removeEventListener("mousemove", move);
-                }, { once: true });
-            });
-        }
-
-        function addResizeHandle(el) {
-            el.querySelectorAll('.handle').forEach(h => h.remove());
-
-            const h = document.createElement("div");
-            h.className = "handle";
-            el.appendChild(h);
-
-            h.addEventListener("mousedown", (e) => {
-                e.stopPropagation();
-                let startX = e.clientX;
-                let startY = e.clientY;
-                let startW = parseInt(getComputedStyle(el).width);
-                let startH = parseInt(getComputedStyle(el).height);
-
-                function resize(ev) {
-                    el.style.width = Math.max(20, startW + (ev.clientX - startX)) + "px";
-                    el.style.height = Math.max(20, startH + (ev.clientY - startY)) + "px";
-                    updateCode();
-                }
-
-                window.addEventListener("mousemove", resize);
-                window.addEventListener("mouseup", () => {
-                    window.removeEventListener("mousemove", resize);
-                }, { once: true });
-            });
-        }
-
-        function updateCode() {
-            if (codeBox) {
-                let content = canvasDD.innerHTML;
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = content;
-
-                tempDiv.querySelectorAll('.draggable').forEach(el => {
-                    el.classList.remove('selected');
-                    el.querySelectorAll('.handle').forEach(h => h.remove());
-                    if (el.contentEditable === "true") {
-                        el.removeAttribute('contentEditable');
-                    }
-                });
-
-                codeBox.value = tempDiv.innerHTML;
-            }
-        }
-
-        function updateCanvasFromCode() {
-            if (canvasDD && codeBox) {
-                canvasDD.innerHTML = codeBox.value;
-                canvasDD.querySelectorAll(".draggable").forEach(el => {
-                    makeMovable(el);
-                    addResizeHandle(el);
-                    enableSelection(el);
-                    if (el.textContent === "Editable Text" || el.contentEditable === "true") {
-                        el.contentEditable = true;
-                    }
-                });
-            }
-        }
-
-        if (codeBox) {
-            codeBox.addEventListener("input", updateCanvasFromCode);
-        }
-
-        function rgbToHex(rgb) {
-            const result = rgb.match(/\d+/g).map(x => parseInt(x).toString(16).padStart(2, '0'));
-            if (result.length === 3) {
-                 return `#${result[0]}${result[1]}${result[2]}`;
-            }
-            return '#000000';
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
             initializeCanvas();
-            
-            if (canvasDD) {
-                updateCanvasFromCode();
-            }
+            checkWinterSeason();
 
             ensureStatsAndAchievements();
             stats.timesVisitedStudio = (stats.timesVisitedStudio || 0) + 1;
@@ -1130,10 +907,11 @@
             document.getElementById('scroll-to-studio-btn')?.addEventListener('click', scrollToGameStudio);
             document.getElementById('exit-game-btn')?.addEventListener('click', exitGame);
 
-            document.getElementById('test-game-dd-btn')?.addEventListener('click', testGameDD);
-            document.getElementById('publish-game-dd-btn')?.addEventListener('click', publishGameDD);
-            document.getElementById('download-game-dd-btn')?.addEventListener('click', downloadGameDD);
-            document.getElementById('load-game-dd-btn')?.addEventListener('click', updateCanvasFromCode);
+            document.getElementById('publish-game-btn')?.addEventListener('click', publishGame);
+            document.getElementById('download-game-btn')?.addEventListener('click', downloadGame);
+            document.getElementById('import-game-btn')?.addEventListener('click', () => {
+                document.getElementById('import-game-file').click();
+            });
 
             document.getElementById('download-user-data-btn')?.addEventListener('click', downloadUserData);
             document.getElementById('import-user-data-btn')?.addEventListener('click', () => {
@@ -1149,4 +927,3 @@
     </script>
 </body>
 </html>
-
