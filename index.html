@@ -10,41 +10,37 @@
     <style>
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
         .text-outline {
-            text-shadow:
-                -0.5px -0.5px 0 #000,
-                 0.5px -0.5px 0 #000,
-                -0.5px  0.5px 0 #000,
-                 0.5px  0.5px 0 #000;
+            text-shadow: -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000;
         }
         .text-gold { color: #796833; }
         .text-red-outline {
-            text-shadow:
-                -0.5px -0.5px 0 #c25252,
-                 0.5px -0.5px 0 #c25252,
-                -0.5px  0.5px 0 #c25252,
-                 0.5px  0.5px 0 #c25252;
+            text-shadow: -0.5px -0.5px 0 #c25252, 0.5px -0.5px 0 #c25252, -0.5px 0.5px 0 #c25252, 0.5px 0.5px 0 #c25252;
             color: #eb1818;
         }
-        #game-frame-container {
+        #game-frame-container, #settings-page, #ai-modal {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: rgba(0,0,0,0.95); z-index:100;
-            display: none; flex-direction: column; align-items:center; justify-content:flex-start; overflow-y:auto;
+            display: none; flex-direction: column; align-items:center; justify-content:center; overflow-y:auto;
         }
+        #settings-page, #ai-modal { background-color: rgba(0,0,0,0.7); backdrop-filter: blur(10px); }
         #game-frame { width:100%; height:100%; border:none; background-color:#fff; }
         .Header { text-align:center; }
-        button:disabled { cursor:not-allowed; background-color:#9ca3af !important; }
         #drawing-canvas { touch-action:none; background-color:white; border:4px solid #796833; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.1); }
-        .achievement-locked { opacity:0.4; filter:grayscale(0.7); }
-
-        .winter-theme { background-color: #e0f2fe !important; }
-        .winter-header { background-color: #f0f9ff !important; border: 4px solid #bae6fd !important; position: relative; overflow: hidden; }
-        .winter-text-gold { color: #0369a1 !important; }
-        
-        .snowflakes { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
-        .snowflake { color: #fff; font-size: 1.2em; position: fixed; top: -10%; user-select: none; cursor: default; animation-name: snowflakes-fall, snowflakes-shake; animation-duration: 10s, 3s; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, infinite; animation-play-state: running, running; }
-        @keyframes snowflakes-fall { 0% { top: -10%; } 100% { top: 100%; } }
-        @keyframes snowflakes-shake { 0% { transform: translateX(0px); } 50% { transform: translateX(80px); } 100% { transform: translateX(0px); } }
+        .tag-pill { font-size: 10px; padding: 2px 6px; border-radius: 9999px; font-weight: bold; background: #f3f4f6; color: #4b5563; }
+        .game-card:hover { transform: translateY(-4px); transition: transform 0.2s ease; }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-[#d3c865] min-h-screen p-4 md:p-8">
@@ -52,230 +48,220 @@
     <header id="main-header" class="Header bg-[#f4e1a1] p-6 rounded-xl shadow-2xl mb-8">
         <h1 class="text-5xl font-extrabold text-[#fffff0] text-outline mb-2">Bread-Games</h1>
         <h3 id="author-text" class="text-xl font-semibold text-gold mb-4">Created by Ethan Taylor</h3>
-        <a href="https://youtube.com/@cocacolaplayz" class="YT text-lg font-bold text-red-outline transition duration-300 hover:scale-105 inline-block">
-            Owner's Social Media
-        </a>
+        <div class="flex flex-wrap justify-center gap-4 mb-6">
+            <a href="https://youtube.com/@cocacolaplayz" class="text-lg font-bold text-red-outline transition duration-300 hover:scale-105 inline-block">
+                Owner's Social Media
+            </a>
+            <button id="open-settings-btn" class="text-lg font-bold text-blue-700 bg-white/50 px-4 py-1 rounded-full hover:bg-white transition duration-300 inline-block shadow-sm">
+                ⚙️ Settings & Account
+            </button>
+        </div>
 
-        <div id="user-system-container" class="mt-6 p-4 bg-yellow-100 rounded-xl shadow-inner border-2 border-yellow-300 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="col-span-1 flex items-center space-x-4">
+        <div id="user-system-container" class="max-w-4xl mx-auto p-4 bg-yellow-100 rounded-xl shadow-inner border-2 border-yellow-300 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center space-x-4">
                 <canvas id="display-avatar" width="64" height="64" class="w-16 h-16 rounded-full border-4 border-yellow-500 bg-white shadow-lg"></canvas>
-                <div>
+                <div class="text-left">
                     <h2 class="text-xl font-bold text-gray-800 mb-1">🍞 Player Profile</h2>
                     <p class="text-gray-700 text-lg">User: <span id="display-username" class="font-extrabold text-blue-600">Guest</span></p>
                 </div>
             </div>
 
-            <div class="col-span-1 space-y-1">
-                <h2 class="text-lg font-bold text-gray-800">Set Display Name</h2>
-                <input type="text" id="username-input" placeholder="Enter Username" class="w-full p-2 border border-gray-400 rounded-md text-sm">
-                <button id="set-username-btn" class="w-full bg-blue-500 text-white font-semibold py-2 rounded-md hover:bg-blue-600 transition duration-150 text-sm">
-                    Update Display Name
-                </button>
-            </div>
-
-            <div class="col-span-1 space-y-1 p-3 bg-white rounded-lg shadow-inner border border-gray-200">
-                <h2 class="text-lg font-bold text-gray-800">📊 Bread Stats</h2>
-                <div id="stats-panel" class="text-sm text-gray-700">
-                    Loading stats...
+            <div class="flex-1 flex gap-4 w-full md:w-auto">
+                <div class="flex-1 bg-white p-3 rounded-lg shadow-inner border border-gray-200">
+                    <h2 class="text-sm font-bold text-gray-800 uppercase tracking-tighter mb-1">📊 Stats</h2>
+                    <div id="stats-panel" class="text-xs text-gray-700 grid grid-cols-2 gap-x-2">
+                        Loading...
+                    </div>
                 </div>
-            </div>
-
-            <div class="col-span-1 space-y-1 p-3 bg-white rounded-lg shadow-inner border border-gray-200">
-                <h2 class="text-lg font-bold text-gray-800">🏆 Achievements</h2>
-                <div id="achievements-panel" class="text-sm text-gray-700 space-y-1 mb-3">
-                    Loading achievements...
+                <div class="flex-1 bg-white p-3 rounded-lg shadow-inner border border-gray-200">
+                    <h2 class="text-sm font-bold text-gray-800 uppercase tracking-tighter mb-1">🏆 Achievements</h2>
+                    <div id="achievements-panel" class="flex flex-wrap gap-1">
+                        Loading...
+                    </div>
                 </div>
-                <h2 class="text-lg font-bold text-gray-800 border-t pt-2">💾 Data Management</h2>
-                <button id="download-user-data-btn" class="w-full bg-indigo-500 text-white font-semibold py-2 rounded-md hover:bg-indigo-600 transition duration-150 text-sm">
-                    ⬇️ Download All Data (.BreadACC)
-                </button>
-                <input type="file" id="import-user-data-file" accept=".BreadACC" class="hidden" onchange="importUserData(event)">
-                <button id="import-user-data-btn" class="w-full bg-yellow-500 text-gray-800 font-semibold py-2 rounded-md hover:bg-yellow-600 transition duration-150 text-sm">
-                    ⬆️ Import Data (.BreadACC)
-                </button>
             </div>
         </div>
-
     </header>
 
     <main class="Content max-w-6xl mx-auto">
-        <h2 class="text-3xl font-bold text-gray-800 mb-6">Available Games (Published)</h2>
-        <p id="no-games-message" class="text-lg text-gray-500 hidden mb-4">You haven't published any games yet. Start creating one below!</p>
-
-        <div id="game-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-white/40 backdrop-blur-md p-4 rounded-xl mb-8 flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg">
+            <div class="relative w-full md:w-1/2">
+                <input type="text" id="search-input" placeholder="Search games..." class="w-full p-2 pl-10 rounded-lg border-2 border-yellow-400 focus:outline-none focus:border-yellow-600 transition">
+                <span class="absolute left-3 top-2.5 opacity-50">🔍</span>
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <span class="text-sm font-bold text-gray-600">Filter:</span>
+                <select id="filter-tag-select" class="p-2 border-2 border-yellow-400 rounded-lg bg-white text-sm font-semibold flex-1 md:flex-none">
+                    <option value="All">All Categories</option>
+                    <option value="Action">Action</option>
+                    <option value="Puzzle">Puzzle</option>
+                    <option value="Bread-Themed">Bread-Themed</option>
+                    <option value="Arcade">Arcade</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
         </div>
+        
+        <p id="no-games-message" class="text-lg text-center font-bold text-gray-700 hidden mb-8">No games found.</p>
+        <div id="game-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"></div>
 
-        <section id="game-editor-section" class="mt-12 p-6 md:p-10 bg-white rounded-xl shadow-2xl">
-            <h2 class="text-4xl font-bold text-gray-800 mb-6 text-center border-b pb-4">🕹️ Bread Game Studio (HTML/JS)</h2>
-            <p class="text-gray-600 mb-6">Write your game code using only HTML, CSS, and JavaScript. The entire game must be self-contained in this single block of HTML.</p>
+        <section id="game-editor-section" class="mt-12 p-6 md:p-10 bg-white rounded-xl shadow-2xl scroll-mt-8 border-t-8 border-green-500">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="studio-heading" class="text-4xl font-bold text-gray-800">🕹️ Bread Game Studio</h2>
+                <button id="magic-bake-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full flex items-center gap-2 transition shadow-lg">
+                    <span>✨ TaylorTech Game Helper</span>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="game-title-input" class="block text-lg font-semibold text-gray-700 mb-2">Game Title</label>
+                    <input type="text" id="game-title-input" placeholder="My Awesome Bread Game" class="w-full p-3 border border-gray-400 rounded-lg text-lg mb-4">
+                    
+                    <label for="game-tag-input" class="block text-lg font-semibold text-gray-700 mb-2">Game Category</label>
+                    <select id="game-tag-input" class="w-full p-3 border border-gray-400 rounded-lg text-lg mb-4">
+                        <option value="Other">Other</option>
+                        <option value="Action">Action</option>
+                        <option value="Puzzle">Puzzle</option>
+                        <option value="Bread-Themed">Bread-Themed</option>
+                        <option value="Arcade">Arcade</option>
+                    </select>
 
-            <label for="game-title-input" class="block text-lg font-semibold text-gray-700 mb-2">Game Title</label>
-            <input type="text" id="game-title-input" placeholder="My Awesome Bread Game" class="w-full p-3 border border-gray-400 rounded-lg text-lg mb-4">
-
-            <label for="thumbnail-upload" class="block text-lg font-semibold text-gray-700 mb-2">Thumbnail (optional)</label>
-            <div class="flex gap-2 items-center mb-4">
-                <input type="file" id="thumbnail-upload" accept="image/*" class="block">
-                <button id="use-avatar-thumbnail-btn" class="bg-yellow-600 text-white font-bold py-2 px-3 rounded-md hover:bg-yellow-700 transition">Use Avatar as Thumbnail</button>
-                <div id="thumbnail-preview-container" class="w-16 h-16 border rounded-md overflow-hidden">
+                    <label class="block text-lg font-semibold text-gray-700 mb-2">Thumbnail</label>
+                    <div class="flex gap-4 items-center mb-4 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                        <div id="thumbnail-preview-container" class="w-16 h-16 border rounded-md overflow-hidden bg-white flex items-center justify-center text-3xl shadow-sm">🍞</div>
+                        <div class="flex flex-col gap-2">
+                            <input type="file" id="thumbnail-upload" accept="image/*" class="text-xs">
+                            <button id="use-avatar-thumbnail-btn" class="bg-yellow-600 text-white text-[10px] font-bold py-1 px-3 rounded uppercase hover:bg-yellow-700">Snapshot Avatar</button>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="game-code-input" class="block text-lg font-semibold text-gray-700 mb-2">Game Code (HTML/JS)</label>
+                    <textarea id="game-code-input" class="w-full h-64 p-4 border-2 border-gray-400 rounded-lg text-sm bg-gray-900 text-green-400 font-mono" placeholder="<html>...</html>"></textarea>
                 </div>
             </div>
 
-            <label for="game-code-input" class="block text-lg font-semibold text-gray-700 mb-2">Game Code (HTML/JS/CSS)</label>
-            <textarea id="game-code-input" class="w-full p-4 border-2 border-gray-400 rounded-lg text-sm bg-gray-50" placeholder=""></textarea>
-
-            <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button id="publish-game-btn" class="bg-green-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-green-700 transition duration-150">
-                    ⬆️ Publish (Save Locally)
-                </button>
-                <input type="file" id="import-game-file" accept=".bread" class="hidden" onchange="importGame(event)">
-                <button id="import-game-btn" class="bg-yellow-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-yellow-700 transition duration-150">
-                    📥 Import .Bread File
-                </button>
-                <button id="download-game-btn" class="bg-red-600 text-white font-bold text-lg py-3 px-6 rounded-lg shadow-xl hover:bg-red-700 transition duration-150">
-                    ⬇️ Download as .Bread
-                </button>
+            <div class="mt-8 flex flex-wrap justify-center gap-4">
+                <button id="publish-game-btn" class="bg-green-600 text-white font-black py-4 px-10 rounded-xl shadow-lg hover:bg-green-700 transition"> PUBLISH LOCALLY </button>
+                <button id="cancel-edit-btn" class="hidden bg-gray-500 text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:bg-gray-600 transition"> CANCEL </button>
+                <button id="import-game-btn" class="bg-yellow-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:bg-yellow-700 transition"> IMPORT .BREAD </button>
+                <button id="download-game-btn" class="bg-red-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:bg-red-700 transition"> DOWNLOAD .BREAD </button>
             </div>
-            <p id="studio-status-message" class="text-center font-medium h-4 mt-4"></p>
+            <input type="file" id="import-game-file" accept=".bread" class="hidden">
         </section>
 
-        <section id="creative-hub-section" class="mt-12 p-6 md:p-10 bg-white rounded-xl shadow-2xl max-w-4xl mx-auto">
-            <h2 class="text-4xl font-bold text-gray-800 mb-6 text-center border-b pb-4">🎨 Avatar Studio</h2>
-            <p class="text-gray-600 mb-6 text-center">Draw your avatar here. This canvas drawing can be referenced in your custom games!</p>
-
+        <section class="mt-12 p-6 md:p-10 bg-white rounded-xl shadow-2xl max-w-4xl mx-auto border-t-8 border-blue-500">
+            <h2 class="text-4xl font-bold text-gray-800 mb-6 text-center">🎨 Avatar Studio</h2>
             <div class="flex flex-col md:flex-row gap-6">
                 <div class="w-full md:w-1/4 space-y-4">
-                    <h3 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-2">Drawing Tools</h3>
-
-                    <label class="block">
-                        <span class="text-sm font-medium text-gray-600">Brush Color:</span>
-                        <input type="color" id="color-picker" value="#000000" class="w-full h-10 mt-1 rounded-md cursor-pointer border-2 border-gray-300">
-                    </label>
-
-                    <label class="block">
-                        <span class="text-sm font-medium text-gray-600">Brush Size (<span id="brush-size-display">5</span>px):</span>
-                        <input type="range" id="size-slider" min="1" max="50" value="5" class="w-full mt-1 accent-purple-600">
-                    </label>
-
-                    <button id="clear-canvas-btn" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600 transition duration-150">
-                        🗑️ Clear Canvas
-                    </button>
+                    <input type="color" id="color-picker" value="#000000" class="w-full h-12 rounded-lg cursor-pointer border-2 bg-white p-1">
+                    <input type="range" id="size-slider" min="1" max="50" value="5" class="w-full accent-blue-600">
+                    <button id="clear-canvas-btn" class="w-full bg-gray-200 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-300">Reset</button>
+                    <button id="set-avatar-btn" class="w-full bg-blue-600 text-white font-black py-3 rounded-xl shadow-lg hover:bg-blue-700">UPDATE AVATAR</button>
                 </div>
-
-                <div class="w-full md:w-3/4 flex justify-center items-start pt-2">
-                    <canvas id="drawing-canvas" width="300" height="300" class="w-full max-w-full aspect-square"></canvas>
-                </div>
-            </div>
-
-            <div class="mt-8">
-                <div class="flex flex-col sm:flex-row justify-center gap-4 mb-4">
-                    <button id="set-avatar-btn" class="bg-blue-600 text-white font-bold text-lg py-3 px-8 rounded-lg shadow-xl hover:bg-blue-700 transition duration-150">
-                        ✨ Set as Profile Avatar
-                    </button>
-                    <button id="download-art-btn" class="bg-purple-600 text-white font-bold text-lg py-3 px-8 rounded-lg shadow-xl hover:bg-purple-700 transition duration-150">
-                        ⬇️ Download Art (PNG)
-                    </button>
+                <div class="w-full md:w-3/4 flex justify-center">
+                    <canvas id="drawing-canvas" width="300" height="300" class="w-full max-w-[300px] aspect-square"></canvas>
                 </div>
             </div>
         </section>
-
     </main>
 
     <div id="game-frame-container">
-        <div class="absolute top-4 right-4 z-50">
-            <button id="exit-game-btn" class="bg-red-600 text-white font-extrabold text-lg p-3 rounded-full shadow-xl hover:bg-red-700 transition duration-300 transform hover:scale-110">
-                &times; Close Game
-            </button>
+        <div class="w-full bg-black/80 p-2 flex justify-between items-center text-white px-8">
+            <span id="playing-title" class="font-bold">Bread Game</span>
+            <button id="exit-game-btn" class="bg-red-600 text-white font-black text-xl px-4 py-1 rounded hover:bg-red-700 transition">CLOSE</button>
         </div>
-        <iframe id="game-frame" allowfullscreen></iframe>
+        <iframe id="game-frame"></iframe>
     </div>
 
-    <script>
-        const USERNAME_KEY = 'breadgames_username';
-        const PUBLISHED_GAMES_KEY = 'breadgames_published_games';
-        const AVATAR_KEY = 'breadgames_avatar_data';
-        const ACHIEVEMENTS_KEY = 'breadgames_achievements';
-        const STATS_KEY = 'breadgames_stats';
+    <div id="ai-modal">
+        <div class="max-w-lg w-full bg-white rounded-2xl p-8 shadow-2xl border-4 border-purple-500 relative">
+            <button id="close-ai-modal" class="absolute top-4 right-4 text-2xl font-bold text-gray-400">&times;</button>
+            <h2 id="ai-modal-title" class="text-2xl font-bold mb-4 flex items-center gap-2 text-purple-700">✨ TaylorTech Game Helper</h2>
+            <div id="ai-modal-content" class="text-gray-700 leading-relaxed max-h-96 overflow-y-auto pr-2">
+                Processing...
+            </div>
+        </div>
+    </div>
 
-        const defaultAchievements = {
-            firstGamePublished: false,
-            firstAvatarDrawn: false,
-            played5Games: false,
-            importedBreadFile: false,
-            dataImported: false
-        };
+    <div id="settings-page">
+        <div class="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8 mt-10 mx-auto border-4 border-yellow-400 relative">
+            <button id="close-settings-btn" class="absolute top-4 right-4 text-3xl font-bold text-gray-400 hover:text-red-500">&times;</button>
+            <h2 class="text-3xl font-extrabold text-gray-800 mb-8 border-b pb-4">⚙️ Account Settings</h2>
+            <div class="space-y-6">
+                <div class="p-5 bg-blue-50 rounded-xl border-2 border-blue-200">
+                    <h3 class="font-bold text-blue-800 mb-3">Display Name</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="username-input" placeholder="New Username" class="flex-1 p-2 border rounded-md">
+                        <button id="set-username-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md font-bold">Update</button>
+                    </div>
+                </div>
+                <div class="p-5 bg-indigo-50 rounded-xl border-2 border-indigo-200">
+                    <h3 class="font-bold text-indigo-800 mb-3">Backup & Recovery</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="download-user-data-btn" class="bg-indigo-600 text-white font-bold py-2 rounded-md text-sm">Export .BreadACC</button>
+                        <button id="import-user-data-btn-trigger" class="bg-white border-2 border-indigo-600 text-indigo-600 font-bold py-2 rounded-md text-sm">Import .BreadACC</button>
+                    </div>
+                    <input type="file" id="import-user-data-file" accept=".BreadACC" class="hidden">
+                </div>
+                <div class="p-5 bg-red-50 rounded-xl border-2 border-red-200">
+                    <h3 class="font-bold text-red-800 mb-1">Factory Reset</h3>
+                    <button id="nuke-data-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-md text-sm hover:bg-red-600">Wipe Everything</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        const defaultStats = {
-            gamesCreated: 0,
-            gamesPlayed: 0,
-            avatarsMade: 0,
-            timesVisitedStudio: 0,
-            dateJoined: null
-        };
-
+    <script type="module">
+        const apiKey = "AIzaSyD4iBvhFZSHZC3VRdjiYQT0nh5wkuRixTA";
         let userData = { username: 'Guest' };
         let stats = {};
         let achievements = {};
         let currentThumbnailDataURL = null;
+        let activeFilter = 'All';
+        let searchQuery = '';
+        let editingGameId = null;
 
-        function checkWinterSeason() {
-            const date = new Date();
-            const isDecember = date.getMonth() === 11;
+        const USERNAME_KEY = 'breadgames_username';
+        const STATS_KEY = 'breadgames_stats';
+        const ACHIEVEMENTS_KEY = 'breadgames_achievements';
+        const PUBLISHED_GAMES_KEY = 'breadgames_published_games';
+        const AVATAR_KEY = 'breadgames_avatar_data';
 
-            if (isDecember) {
-                document.body.classList.add('winter-theme');
-                document.getElementById('main-header').classList.add('winter-header');
-                document.getElementById('author-text').classList.add('winter-text-gold');
-                
-                const snowflakeContainer = document.createElement('div');
-                snowflakeContainer.className = 'snowflakes';
-                snowflakeContainer.setAttribute('aria-hidden', 'true');
-                
-                for(let i = 0; i < 20; i++) {
-                    const flake = document.createElement('div');
-                    flake.className = 'snowflake';
-                    flake.innerHTML = '❅';
-                    flake.style.left = Math.random() * 100 + '%';
-                    flake.style.animationDelay = Math.random() * 10 + 's, ' + Math.random() * 3 + 's';
-                    snowflakeContainer.appendChild(flake);
+        async function callGemini(prompt, systemPrompt = "You are a helpful assistant.") {
+            let delay = 1000;
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] }
+                        })
+                    });
+                    if (!response.ok) throw new Error('API Error');
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text;
+                } catch (e) {
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
                 }
-                document.body.appendChild(snowflakeContainer);
             }
+            throw new Error("Failed to reach Gemini after retries.");
+        }
+
+        function loadUserData() {
+            userData.username = localStorage.getItem(USERNAME_KEY) || 'Guest';
+            updateDisplay();
+            loadAvatar();
         }
 
         function saveUserData() {
             localStorage.setItem(USERNAME_KEY, userData.username);
             updateDisplay();
-        }
-
-        function loadUserData() {
-            const savedUsername = localStorage.getItem(USERNAME_KEY);
-            if (savedUsername) userData.username = savedUsername;
-            updateDisplay();
-            loadAvatar();
-        }
-
-        function ensureStatsAndAchievements() {
-            const savedStats = JSON.parse(localStorage.getItem(STATS_KEY) || 'null');
-            const savedAchievements = JSON.parse(localStorage.getItem(ACHIEVEMENTS_KEY) || 'null');
-
-            stats = savedStats || Object.assign({}, defaultStats);
-            achievements = savedAchievements || Object.assign({}, defaultAchievements);
-
-            if (!stats.dateJoined) {
-                stats.dateJoined = new Date().toISOString();
-                saveStats();
-            }
-        }
-
-        function saveStats() {
-            localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-            renderStatsPanel();
-            checkAchievementsAfterStatsChange();
-        }
-
-        function saveAchievements() {
-            localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
-            renderAchievementsPanel();
+            renderGameList();
         }
 
         function updateDisplay() {
@@ -284,645 +270,363 @@
 
         function renderStatsPanel() {
             const el = document.getElementById('stats-panel');
-            if (!el) return;
-            const joined = stats.dateJoined ? new Date(stats.dateJoined).toLocaleDateString() : '—';
             el.innerHTML = `
-                <div>Games Created: <strong>${stats.gamesCreated}</strong></div>
-                <div>Games Played: <strong>${stats.gamesPlayed}</strong></div>
-                <div>Avatars Drawn: <strong>${stats.avatarsMade}</strong></div>
-                <div>Studio Visits: <strong>${stats.timesVisitedStudio}</strong></div>
-                <div>Joined On: <strong>${joined}</strong></div>
+                <div>Created: <strong>${stats.gamesCreated || 0}</strong></div>
+                <div>Played: <strong>${stats.gamesPlayed || 0}</strong></div>
+                <div>Avatars: <strong>${stats.avatarsMade || 0}</strong></div>
+                <div>Visits: <strong>${stats.timesVisitedStudio || 0}</strong></div>
             `;
         }
 
         function renderAchievementsPanel() {
             const el = document.getElementById('achievements-panel');
-            if (!el) return;
             el.innerHTML = '';
-
             const list = [
-                { key: 'firstGamePublished', label: 'First Game Published' },
-                { key: 'firstAvatarDrawn', label: 'First Avatar Drawn' },
-                { key: 'played5Games', label: 'Played 5 Games' },
-                { key: 'importedBreadFile', label: 'Imported .bread File' },
-                { key: 'dataImported', label: 'Restored Account Data' }
+                { key: 'firstGamePublished', sym: '🎮' },
+                { key: 'firstAvatarDrawn', sym: '🎨' },
+                { key: 'played5Games', sym: '🔥' },
+                { key: 'magicBakerUsed', sym: '✨' }
             ];
-
             list.forEach(item => {
-                const unlocked = !!achievements[item.key];
-                const div = document.createElement('div');
-                div.className = `flex items-center gap-2 ${unlocked ? '' : 'achievement-locked'}`;
-                div.innerHTML = `
-                    <div class="w-6 h-6 flex items-center justify-center rounded-full ${unlocked ? 'bg-yellow-400' : 'bg-gray-300'} text-xs font-bold">
-                        ${unlocked ? '✓' : '✕'}
-                    </div>
-                    <div>${item.label}</div>
-                `;
-                el.appendChild(div);
+                if (achievements[item.key]) {
+                    const span = document.createElement('span');
+                    span.className = "text-xl grayscale-0";
+                    span.title = item.key;
+                    span.textContent = item.sym;
+                    el.appendChild(span);
+                }
             });
         }
 
-        function unlockAchievement(name) {
-            if (!achievements[name]) {
-                achievements[name] = true;
-                saveAchievements();
-                const msgEl = document.getElementById('studio-status-message');
-                if (msgEl) {
-                    msgEl.classList.remove('text-red-500');
-                    msgEl.classList.add('text-green-500');
-                    msgEl.textContent = `🏆 Achievement unlocked: ${name}`;
-                    setTimeout(() => msgEl.textContent = '', 3000);
-                }
+        function saveStats() {
+            localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+            renderStatsPanel();
+        }
+
+        function saveAchievements() {
+            localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
+            renderAchievementsPanel();
+        }
+
+        function ensureStats() {
+            stats = JSON.parse(localStorage.getItem(STATS_KEY) || '{"gamesCreated":0,"gamesPlayed":0,"avatarsMade":0,"timesVisitedStudio":0}');
+            achievements = JSON.parse(localStorage.getItem(ACHIEVEMENTS_KEY) || '{}');
+            saveStats();
+            saveAchievements();
+        }
+
+        function loadAvatar() {
+            const data = localStorage.getItem(AVATAR_KEY);
+            const disp = document.getElementById('display-avatar');
+            const dctx = disp.getContext('2d');
+            if (data) {
+                const img = new Image();
+                img.onload = () => dctx.drawImage(img, 0, 0, 64, 64);
+                img.src = data;
+            } else {
+                dctx.fillStyle = '#ffdf7e';
+                dctx.fillRect(0,0,64,64);
             }
         }
 
-        function checkAchievementsAfterStatsChange() {
-            if (stats.gamesCreated > 0) unlockAchievement('firstGamePublished');
-            if (stats.avatarsMade > 0) unlockAchievement('firstAvatarDrawn');
-            if (stats.gamesPlayed >= 5) unlockAchievement('played5Games');
-        }
+        window.launchGame = (id) => {
+            const g = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}')[id];
+            if (!g) return;
+            document.getElementById('playing-title').textContent = g.gameTitle;
+            document.getElementById('game-frame').src = `data:text/html;charset=utf-8,${encodeURIComponent(g.gameCode)}`;
+            document.getElementById('game-frame-container').style.display = 'flex';
+            stats.gamesPlayed++; saveStats();
+        };
 
-        function renderGameCard(gameId, gameData) {
-            const thumbnailHtml = gameData.thumbnail ? `<img src="${gameData.thumbnail}" class="w-20 h-20 rounded-xl mx-auto mb-4 object-cover">` : `
-                <svg class="w-16 h-16 mx-auto text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 10h-2V7h2V5h-2V2h-2v3h-2v2h2v3h-2v2h2v3h2v-3h2v-2h-2v-3zm-6 3v-2h-2V7h2V5h-2V2H9v3H7v2h2v3H7v2h2v3h2v-3zm6-5h-2V7h2v1zM9 5H7V2h2v3zM5 21H3c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2h2v14zM3 7v12h2V7H3z"/>
-                    <path d="M18 10h2V7h-2V5h-2V2h-2v3h-2v2h2v3h-2v2h2v3h2v-3h2v-2zM7 10h2V7H7v3zM7 5H9V2H7v3zm-4 7h2v-2H3v2zM3 17h2v-2H3v2z"/>
-                    <path fill-rule="evenodd" d="M22 19H2V5h20v14zM4 17h16V7H4v10zm11-8V7h2v2h-2zm0 4v-2h2v2h-2zm-4 0v-2h2v2h-2zm-4 0v-2h2v2H7z" clip-rule="evenodd"/>
-                </svg>
-            `;
+        window.deleteGame = (id) => {
+            if(confirm("Are you sure you want to remove this bread?")) {
+                const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
+                delete games[id];
+                localStorage.setItem(PUBLISHED_GAMES_KEY, JSON.stringify(games));
+                renderGameList();
+            }
+        };
 
-            const cardHtml = `
-                <div class="game-card bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition duration-300 transform hover:scale-[1.02]">
-                    <div class="mb-4">${thumbnailHtml}</div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-1">${escapeHtml(gameData.gameTitle)}</h3>
-                    <p class="text-xs font-semibold text-gray-500 mb-2">By: ${escapeHtml(gameData.creatorUsername)}</p>
-                    <p class="text-sm text-gray-600 mb-4">A user-created game using local HTML/JS. Play now!</p>
-                    <button class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition duration-300 w-full" onclick="launchGame('${gameId}')">
-                        Play Game
-                    </button>
-                </div>
-            `;
-            return cardHtml;
-        }
+        window.getAiFeedback = async (id) => {
+            const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
+            const g = games[id];
+            if (!g) return;
+            
+            const modal = document.getElementById('ai-modal');
+            const content = document.getElementById('ai-modal-content');
+            const title = document.getElementById('ai-modal-title');
+            
+            title.textContent = `✨ TaylorTech Game Helper: ${g.gameTitle}`;
+            content.innerHTML = '<div class="flex flex-col items-center py-8"><div class="loading-spinner mb-4 border-purple-300 border-t-purple-600"></div><p>Asking TaylorTech for a review...</p></div>';
+            modal.style.display = 'flex';
+
+            try {
+                const feedback = await callGemini(
+                    `Review this game called "${g.gameTitle}" in the category "${g.tag}". Code snippet: ${g.gameCode.substring(0, 500)}...`,
+                    "You are a master bread baker and game critic. Give a fun, encouraging review of this game. Use lots of bread puns. Keep it under 100 words."
+                );
+                content.innerHTML = `<p class="italic text-lg">"${feedback}"</p><div class="mt-4 text-right font-bold">- TaylorTech AI</div>`;
+            } catch (err) {
+                content.innerHTML = '<p class="text-red-500">Failed to get feedback.</p>';
+            }
+        };
+
+        window.editGame = (id) => {
+            const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
+            const game = games[id];
+            if (!game) return;
+
+            editingGameId = id;
+            document.getElementById('game-title-input').value = game.gameTitle;
+            document.getElementById('game-code-input').value = game.gameCode;
+            document.getElementById('game-tag-input').value = game.tag || 'Other';
+            currentThumbnailDataURL = game.thumbnail;
+            
+            if (currentThumbnailDataURL) {
+                document.getElementById('thumbnail-preview-container').innerHTML = `<img src="${currentThumbnailDataURL}" class="w-full h-full object-cover">`;
+            } else {
+                document.getElementById('thumbnail-preview-container').innerHTML = '🍞';
+            }
+
+            document.getElementById('publish-game-btn').textContent = "SAVE CHANGES";
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+            document.getElementById('studio-heading').textContent = "🕹️ Editing: " + game.gameTitle;
+            document.getElementById('game-editor-section').scrollIntoView({ behavior: 'smooth' });
+        };
 
         function renderGameList() {
-            const gameListEl = document.getElementById('game-list');
+            const listEl = document.getElementById('game-list');
             const noGamesEl = document.getElementById('no-games-message');
             const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
-            const gameIds = Object.keys(games);
+            const ids = Object.keys(games);
+            listEl.innerHTML = '';
 
-            gameListEl.innerHTML = '';
+            const filteredIds = ids.filter(id => {
+                const game = games[id];
+                const matchesFilter = activeFilter === 'All' || game.tag === activeFilter;
+                const matchesSearch = game.gameTitle.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesFilter && matchesSearch;
+            });
 
-            if (gameIds.length === 0) {
+            if (filteredIds.length === 0) {
                 noGamesEl.classList.remove('hidden');
                 return;
             }
 
             noGamesEl.classList.add('hidden');
-
-            gameIds.forEach(id => {
-                const gameData = games[id];
-                gameListEl.insertAdjacentHTML('beforeend', renderGameCard(id, gameData));
+            filteredIds.forEach(id => {
+                const game = games[id];
+                const isOwner = game.creatorUsername === userData.username;
+                const card = document.createElement('div');
+                card.className = "game-card bg-white p-4 rounded-xl shadow-md border group relative";
+                card.innerHTML = `
+                    <div class="w-full h-24 bg-gray-200 rounded-lg overflow-hidden mb-2 relative">
+                        ${game.thumbnail ? `<img src="${game.thumbnail}" class="w-full h-full object-cover">` : '<div class="flex items-center justify-center h-full text-3xl">🍞</div>'}
+                        <div class="absolute top-1 right-1">
+                            <span class="tag-pill bg-white/90 shadow-sm">${game.tag || 'Other'}</span>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-gray-900 truncate">${game.gameTitle}</h3>
+                    <p class="text-[10px] text-gray-400 mb-3 uppercase tracking-tighter">By: ${game.creatorUsername}</p>
+                    <div class="flex gap-1 flex-wrap">
+                        <button onclick="window.launchGame('${id}')" class="flex-1 bg-green-600 text-white font-bold py-1 px-4 rounded-lg text-sm hover:bg-green-700 transition">Play</button>
+                        <button onclick="window.getAiFeedback('${id}')" class="bg-purple-100 text-purple-700 font-bold py-1 px-2 rounded-lg text-sm hover:bg-purple-200" title="AI Review">✨</button>
+                        ${isOwner ? `
+                            <button onclick="window.editGame('${id}')" class="bg-blue-600 text-white font-bold py-1 px-3 rounded-lg text-sm hover:bg-blue-700 transition">Edit</button>
+                            <button onclick="window.deleteGame('${id}')" class="bg-red-500 text-white font-bold py-1 px-2 rounded-lg text-sm hover:bg-red-600 transition">🗑️</button>
+                        ` : ''}
+                    </div>
+                `;
+                listEl.appendChild(card);
             });
         }
 
-        function publishGame() {
-            const titleInput = document.getElementById('game-title-input');
-            const codeInput = document.getElementById('game-code-input');
-            const messageEl = document.getElementById('studio-status-message');
-
-            const gameTitle = titleInput.value.trim();
-            const gameCode = codeInput.value.trim();
-
-            if (!gameTitle || !gameCode) {
-                messageEl.classList.remove('text-green-500');
-                messageEl.classList.add('text-red-500');
-                messageEl.textContent = 'Game Title and Code cannot be empty!';
-                setTimeout(() => messageEl.textContent = '', 3000);
-                return;
-            }
-
-            const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
-            const gameId = `game-${Date.now()}`;
-
-            games[gameId] = {
-                gameTitle: gameTitle,
-                gameCode: gameCode,
-                creatorUsername: userData.username,
-                publishedDate: new Date().toISOString(),
-                thumbnail: currentThumbnailDataURL || null
-            };
-
-            localStorage.setItem(PUBLISHED_GAMES_KEY, JSON.stringify(games));
-
-            stats.gamesCreated = (stats.gamesCreated || 0) + 1;
-            saveStats();
-
-            messageEl.classList.remove('text-red-500');
-            messageEl.classList.add('text-green-500');
-            messageEl.textContent = `🎉 Game "${gameTitle}" published successfully!`;
-            setTimeout(() => messageEl.textContent = '', 3000);
-
-            renderGameList();
+        function resetStudio() {
+            editingGameId = null;
+            document.getElementById('game-title-input').value = '';
+            document.getElementById('game-code-input').value = '';
+            document.getElementById('game-tag-input').value = 'Other';
+            currentThumbnailDataURL = null;
+            document.getElementById('thumbnail-preview-container').innerHTML = '🍞';
+            document.getElementById('publish-game-btn').textContent = "PUBLISH LOCALLY";
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+            document.getElementById('studio-heading').textContent = "🕹️ Bread Game Studio";
         }
 
-        function downloadGame() {
-            const titleInput = document.getElementById('game-title-input');
-            const codeInput = document.getElementById('game-code-input');
-            const messageEl = document.getElementById('studio-status-message');
-
-            const gameTitle = titleInput.value.trim();
-            const gameCode = codeInput.value.trim();
-
-            if (!gameTitle || !gameCode) {
-                messageEl.classList.remove('text-green-500');
-                messageEl.classList.add('text-red-500');
-                messageEl.textContent = 'Game Title and Code cannot be empty for download!';
-                setTimeout(() => messageEl.textContent = '', 3000);
-                return;
-            }
-
-            const breadFileContent = {
-                fileType: "BreadGame",
-                version: "1.0",
-                creatorUsername: userData.username,
-                gameTitle: gameTitle,
-                gameCode: gameCode,
-                thumbnail: currentThumbnailDataURL || null
-            };
-
-            const jsonString = JSON.stringify(breadFileContent, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${gameTitle.replace(/[^a-zA-Z0-9]/g, '_')}.bread`;
-
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-            messageEl.classList.remove('text-red-500');
-            messageEl.classList.add('text-green-500');
-            messageEl.textContent = `⬇️ Game downloaded as ${link.download}!`;
-            setTimeout(() => messageEl.textContent = '', 3000);
-        }
-
-        window.importGame = function(event) {
-            const file = event.target.files[0];
-            const messageEl = document.getElementById('studio-status-message');
-
-            if (!file) return;
-            if (!file.name.endsWith('.bread')) {
-                messageEl.classList.remove('text-green-500');
-                messageEl.classList.add('text-red-500');
-                messageEl.textContent = 'Invalid file type. Please select a .bread file.';
-                setTimeout(() => messageEl.textContent = '', 3000);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const content = JSON.parse(e.target.result);
-
-                    if (content.fileType !== "BreadGame" || !content.gameTitle || !content.gameCode) {
-                        messageEl.classList.remove('text-green-500');
-                        messageEl.classList.add('text-red-500');
-                        messageEl.textContent = 'Error: Invalid .bread file structure.';
-                        return;
-                    }
-
-                    document.getElementById('game-title-input').value = content.gameTitle;
-                    document.getElementById('game-code-input').value = content.gameCode;
-
-                    if (content.thumbnail) {
-                        currentThumbnailDataURL = content.thumbnail;
-                        showThumbnailPreview(content.thumbnail);
-                    } else {
-                        currentThumbnailDataURL = null;
-                        showThumbnailPreview(null);
-                    }
-
-                    const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
-                    const gameId = `game-${Date.now()}`;
-
-                    games[gameId] = {
-                        gameTitle: content.gameTitle,
-                        gameCode: content.gameCode,
-                        creatorUsername: content.creatorUsername || "Unknown Creator",
-                        publishedDate: new Date().toISOString(),
-                        thumbnail: content.thumbnail || null
-                    };
-
-                    localStorage.setItem(PUBLISHED_GAMES_KEY, JSON.stringify(games));
-
-                    stats.gamesCreated = (stats.gamesCreated || 0) + 1;
-                    saveStats();
-
-                    unlockAchievement('importedBreadFile');
-                    renderGameList();
-
-                    messageEl.classList.remove('text-red-500');
-                    messageEl.classList.add('text-green-500');
-                    messageEl.textContent = `✅ Game "${content.gameTitle}" by ${content.creatorUsername} imported and published!`;
-                } catch (error) {
-                    messageEl.classList.remove('text-green-500');
-                    messageEl.classList.add('text-red-500');
-                    messageEl.textContent = 'Error parsing .bread file.';
-                    console.error("Error parsing .bread file:", error);
-                }
-                setTimeout(() => messageEl.textContent = '', 5000);
-            };
-            reader.readAsText(file);
-        }
-
-        function downloadUserData() {
-            const messageEl = document.getElementById('studio-status-message');
-            const dataToExport = {};
-
-            const keysToInclude = [USERNAME_KEY, PUBLISHED_GAMES_KEY, AVATAR_KEY, ACHIEVEMENTS_KEY, STATS_KEY];
-
-            keysToInclude.forEach(key => {
-                const value = localStorage.getItem(key);
-                if (value !== null) {
-                    dataToExport[key] = value;
-                }
-            });
-
-            const accFileContent = {
-                fileType: "BreadAccountData",
-                version: "1.0",
-                exportedDate: new Date().toISOString(),
-                localStorageData: dataToExport
-            };
-
-            const jsonString = JSON.stringify(accFileContent, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Bread-Account-Backup-${new Date().toISOString().slice(0, 10)}.BreadACC`;
-
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-            messageEl.classList.remove('text-red-500');
-            messageEl.classList.add('text-green-500');
-            messageEl.textContent = `⬇️ All user data downloaded as ${link.download}!`;
-            setTimeout(() => messageEl.textContent = '', 3000);
-        }
-
-        window.importUserData = function(event) {
-            const file = event.target.files[0];
-            const messageEl = document.getElementById('studio-status-message');
-
-            if (!file) return;
-            if (!file.name.endsWith('.BreadACC')) {
-                messageEl.classList.remove('text-green-500');
-                messageEl.classList.add('text-red-500');
-                messageEl.textContent = 'Invalid file type. Please select a .BreadACC file.';
-                setTimeout(() => messageEl.textContent = '', 3000);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const content = JSON.parse(e.target.result);
-
-                    if (content.fileType !== "BreadAccountData" || !content.localStorageData) {
-                        messageEl.classList.remove('text-green-500');
-                        messageEl.classList.add('text-red-500');
-                        messageEl.textContent = 'Error: Invalid .BreadACC file structure.';
-                        return;
-                    }
-
-                    localStorage.clear();
-
-                    const importedData = content.localStorageData;
-                    for (const key in importedData) {
-                        localStorage.setItem(key, importedData[key]);
-                    }
-
-                    loadUserData();
-                    ensureStatsAndAchievements();
-                    renderStatsPanel();
-                    renderAchievementsPanel();
-                    renderGameList();
-                    unlockAchievement('dataImported');
-                    
-                    messageEl.classList.remove('text-red-500');
-                    messageEl.classList.add('text-green-500');
-                    messageEl.textContent = `✅ Successfully imported and restored account data!`;
-                } catch (error) {
-                    messageEl.classList.remove('text-green-500');
-                    messageEl.classList.add('text-red-500');
-                    messageEl.textContent = 'Error parsing .BreadACC file. Data was not restored.';
-                    console.error("Error parsing .BreadACC file:", error);
-                }
-                setTimeout(() => messageEl.textContent = '', 5000);
-            };
-            reader.readAsText(file);
-        }
-
-        const CANVAS_SIZE = 300;
-        let canvas, ctx;
-        let isDrawing = false;
-        let lastX = 0, lastY = 0;
-
-        function initializeCanvas() {
+        let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0;
+        function initCanvas() {
             canvas = document.getElementById('drawing-canvas');
             ctx = canvas.getContext('2d');
-
-            canvas.width = CANVAS_SIZE;
-            canvas.height = CANVAS_SIZE;
-
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = document.getElementById('color-picker').value;
-
-            clearCanvas(false);
-
-            canvas.addEventListener('mousedown', (e) => startDrawing(e, 'mouse'));
-            canvas.addEventListener('mousemove', (e) => draw(e, 'mouse'));
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-
-            canvas.addEventListener('touchstart', (e) => startDrawing(e, 'touch'), { passive: false });
-            canvas.addEventListener('touchmove', (e) => draw(e, 'touch'), { passive: false });
-            canvas.addEventListener('touchend', stopDrawing);
-
-            document.getElementById('color-picker').addEventListener('input', (e) => {
-                ctx.strokeStyle = e.target.value;
-            });
-
-            const sizeSlider = document.getElementById('size-slider');
-            const sizeDisplay = document.getElementById('brush-size-display');
-            sizeSlider.addEventListener('input', (e) => {
-                ctx.lineWidth = e.target.value;
-                sizeDisplay.textContent = e.target.value;
-            });
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            clearCanvas();
+            const getCoords = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return [(clientX - rect.left) * (300 / rect.width), (clientY - rect.top) * (300 / rect.height)];
+            };
+            const startD = (e) => { e.preventDefault(); isDrawing = true; [lastX, lastY] = getCoords(e); };
+            const draw = (e) => {
+                if (!isDrawing) return; e.preventDefault();
+                const [x, y] = getCoords(e);
+                ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y);
+                ctx.strokeStyle = document.getElementById('color-picker').value;
+                ctx.lineWidth = document.getElementById('size-slider').value;
+                ctx.stroke(); [lastX, lastY] = [x, y];
+            };
+            canvas.onmousedown = startD; canvas.onmousemove = draw; window.onmouseup = () => isDrawing = false;
+            canvas.ontouchstart = startD; canvas.ontouchmove = draw; canvas.ontouchend = () => isDrawing = false;
         }
-
-        function getClientCoords(e, type) {
-            if (type === 'touch' && e.touches.length > 0) {
-                return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
-            }
-            return { clientX: e.clientX, clientY: e.clientY };
-        }
-
-        function startDrawing(e, type) {
-            e.preventDefault();
-            isDrawing = true;
-            const { clientX, clientY } = getClientCoords(e, type);
-            [lastX, lastY] = getCanvasCoords(clientX, clientY);
-            draw(e, type);
-        }
-
-        function draw(e, type) {
-            if (!isDrawing) return;
-            e.preventDefault();
-
-            const { clientX, clientY } = getClientCoords(e, type);
-            const [currentX, currentY] = getCanvasCoords(clientX, clientY);
-
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(currentX, currentY);
-            ctx.stroke();
-
-            [lastX, lastY] = [currentX, currentY];
-        }
-
-        function stopDrawing() { isDrawing = false; }
-
-        function getCanvasCoords(clientX, clientY) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const x = (clientX - rect.left) * scaleX;
-            const y = (clientY - rect.top) * scaleY;
-            return [x, y];
-        }
-
-        function clearCanvas(fillWhite = true) {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function scrollToGameStudio() {
-            document.getElementById('game-editor-section').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function loadAvatar() {
-            const avatarData = localStorage.getItem(AVATAR_KEY);
-            const displayCanvas = document.getElementById('display-avatar');
-            const displayCtx = displayCanvas.getContext('2d');
-            const size = displayCanvas.width;
-
-            if (avatarData) {
-                const img = new Image();
-                img.onload = function() {
-                    displayCtx.clearRect(0, 0, size, size);
-                    displayCtx.drawImage(img, 0, 0, size, size);
-                };
-                img.src = avatarData;
-            } else {
-                displayCtx.clearRect(0, 0, size, size);
-                displayCtx.fillStyle = '#ffdf7e';
-                displayCtx.beginPath();
-                displayCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-                displayCtx.fill();
-                displayCtx.strokeStyle = '#c27d00';
-                displayCtx.lineWidth = 4;
-                displayCtx.stroke();
-            }
-        }
-
-        function setAvatar() {
-            const messageEl = document.getElementById('studio-status-message');
-            const artDataURL = canvas.toDataURL('image/png');
-            localStorage.setItem(AVATAR_KEY, artDataURL);
-            loadAvatar();
-
-            stats.avatarsMade = (stats.avatarsMade || 0) + 1;
-            saveStats();
-
-            unlockAchievement('firstAvatarDrawn');
-
-            messageEl.classList.remove('text-red-500');
-            messageEl.classList.add('text-green-500');
-            messageEl.textContent = '✨ Avatar updated!';
-            setTimeout(() => messageEl.textContent = '', 3000);
-        }
-
-        function downloadArt() {
-            const messageEl = document.getElementById('studio-status-message');
-
-            const link = document.createElement('a');
-            link.download = `bread-asset-${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            messageEl.classList.remove('text-red-500');
-            messageEl.classList.add('text-green-500');
-            messageEl.textContent = `✅ Art asset downloaded as PNG!`;
-            setTimeout(() => messageEl.textContent = '', 3000);
-        }
-
-        function launchGame(gameId) {
-            const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
-            const gameData = games[gameId];
-
-            if (!gameData || !gameData.gameCode) {
-                console.error("Game not found or code is missing:", gameId);
-                return;
-            }
-
-            const gameFrame = document.getElementById('game-frame');
-            const gameContainer = document.getElementById('game-frame-container');
-
-            const dataUri = `data:text/html;charset=utf-8,${encodeURIComponent(gameData.gameCode)}`;
-
-            gameFrame.src = dataUri;
-            gameContainer.style.display = 'flex';
-
-            document.title = gameData.gameTitle + ' - Bread-Games';
-
-            stats.gamesPlayed = (stats.gamesPlayed || 0) + 1;
-            saveStats();
-
-            if (stats.gamesPlayed >= 5) unlockAchievement('played5Games');
-        }
-
-        function exitGame() {
-            const gameFrame = document.getElementById('game-frame');
-            const gameContainer = document.getElementById('game-frame-container');
-
-            gameContainer.style.display = 'none';
-            gameFrame.src = '';
-
-            document.title = 'Bread-Games';
-        }
-
-        const thumbnailInput = document.getElementById('thumbnail-upload');
-        const thumbnailPreviewContainer = document.getElementById('thumbnail-preview-container');
-        const useAvatarBtn = document.getElementById('use-avatar-thumbnail-btn');
-
-        function showThumbnailPreview(dataURL) {
-            const container = document.getElementById('thumbnail-preview-container');
-            container.innerHTML = '';
-            if (!dataURL) {
-                container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-xs text-gray-500">No preview</div>';
-                return;
-            }
-            const img = document.createElement('img');
-            img.src = dataURL;
-            img.className = 'w-full h-full object-cover';
-            container.appendChild(img);
-        }
-
-        document.addEventListener('change', (e) => {
-            if (e.target && e.target.id === 'thumbnail-upload') {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    currentThumbnailDataURL = ev.target.result;
-                    showThumbnailPreview(currentThumbnailDataURL);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        (function attachUseAvatarBtn() {
-            const btn = document.getElementById('use-avatar-thumbnail-btn');
-            if (!btn) return;
-            btn.addEventListener('click', () => {
-                const avatar = localStorage.getItem(AVATAR_KEY);
-                if (avatar) {
-                    currentThumbnailDataURL = avatar;
-                    showThumbnailPreview(currentThumbnailDataURL);
-                } else {
-                    const messageEl = document.getElementById('studio-status-message');
-                    messageEl.classList.remove('text-green-500');
-                    messageEl.classList.add('text-red-500');
-                    messageEl.textContent = "No avatar set yet - draw and 'Set as Profile Avatar' first.";
-                    setTimeout(() => messageEl.textContent = '', 3000);
-                }
-            });
-        })();
-
-        function escapeHtml(unsafe) {
-            return unsafe
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
-        }
+        function clearCanvas() { ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 300, 300); }
 
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
-            initializeCanvas();
-            checkWinterSeason();
-
-            ensureStatsAndAchievements();
-            stats.timesVisitedStudio = (stats.timesVisitedStudio || 0) + 1;
-            saveStats();
-
-            renderStatsPanel();
-            renderAchievementsPanel();
+            initCanvas();
+            ensureStats();
             renderGameList();
 
-            document.getElementById('set-username-btn')?.addEventListener('click', () => {
-                const input = document.getElementById('username-input');
-                const newUsername = input.value.trim();
-                const messageEl = document.getElementById('studio-status-message');
-                if (newUsername) {
-                    userData.username = newUsername;
-                    saveUserData();
-                    messageEl.classList.remove('text-red-500');
-                    messageEl.classList.add('text-green-500');
-                    messageEl.textContent = `Display name set to ${newUsername}.`;
-                } else {
-                    messageEl.classList.remove('text-green-500');
-                    messageEl.classList.add('text-red-500');
-                    messageEl.textContent = 'Username cannot be empty!';
+            document.getElementById('magic-bake-btn').onclick = async () => {
+                const title = document.getElementById('game-title-input').value.trim();
+                const tag = document.getElementById('game-tag-input').value;
+                if (!title) {
+                    alert("Enter a title first!");
+                    return;
                 }
-                setTimeout(() => messageEl.textContent = '', 3000);
-                input.value = '';
-            });
+                
+                const btn = document.getElementById('magic-bake-btn');
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading-spinner"></div> Processing...';
 
-            document.getElementById('scroll-to-studio-btn')?.addEventListener('click', scrollToGameStudio);
-            document.getElementById('exit-game-btn')?.addEventListener('click', exitGame);
+                try {
+                    const generatedCode = await callGemini(
+                        `Write a single-file HTML/Javascript game titled "${title}" in the category "${tag}". Use Tailwind CSS for styling if needed. The game must be self-contained and playable.`,
+                        "You are an expert game developer. Output ONLY raw HTML/JS code. No markdown formatting, no backticks, just the code."
+                    );
+                    document.getElementById('game-code-input').value = generatedCode;
+                    achievements.magicBakerUsed = true;
+                    saveAchievements();
+                } catch (err) {
+                    alert("TaylorTech encountered an error. Try again.");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            };
 
-            document.getElementById('publish-game-btn')?.addEventListener('click', publishGame);
-            document.getElementById('download-game-btn')?.addEventListener('click', downloadGame);
-            document.getElementById('import-game-btn')?.addEventListener('click', () => {
-                document.getElementById('import-game-file').click();
-            });
+            document.getElementById('close-ai-modal').onclick = () => {
+                document.getElementById('ai-modal').style.display = 'none';
+            };
 
-            document.getElementById('download-user-data-btn')?.addEventListener('click', downloadUserData);
-            document.getElementById('import-user-data-btn')?.addEventListener('click', () => {
-                document.getElementById('import-user-data-file').click();
-            });
+            document.getElementById('search-input').oninput = (e) => {
+                searchQuery = e.target.value;
+                renderGameList();
+            };
 
-            document.getElementById('clear-canvas-btn')?.addEventListener('click', clearCanvas);
-            document.getElementById('set-avatar-btn')?.addEventListener('click', setAvatar);
-            document.getElementById('download-art-btn')?.addEventListener('click', downloadArt);
+            document.getElementById('filter-tag-select').onchange = (e) => {
+                activeFilter = e.target.value;
+                renderGameList();
+            };
 
-            window.launchGame = launchGame;
+            document.getElementById('set-username-btn').onclick = () => {
+                const val = document.getElementById('username-input').value.trim();
+                if (val) { userData.username = val; saveUserData(); }
+            };
+
+            document.getElementById('open-settings-btn').onclick = () => document.getElementById('settings-page').style.display = 'flex';
+            document.getElementById('close-settings-btn').onclick = () => document.getElementById('settings-page').style.display = 'none';
+            document.getElementById('exit-game-btn').onclick = () => {
+                document.getElementById('game-frame-container').style.display = 'none';
+                document.getElementById('game-frame').src = '';
+            };
+
+            document.getElementById('set-avatar-btn').onclick = () => {
+                localStorage.setItem(AVATAR_KEY, canvas.toDataURL());
+                loadAvatar();
+                stats.avatarsMade++;
+                saveStats();
+                achievements.firstAvatarDrawn = true;
+                saveAchievements();
+            };
+
+            document.getElementById('clear-canvas-btn').onclick = clearCanvas;
+            document.getElementById('cancel-edit-btn').onclick = resetStudio;
+            
+            document.getElementById('publish-game-btn').onclick = () => {
+                const title = document.getElementById('game-title-input').value.trim();
+                const tag = document.getElementById('game-tag-input').value;
+                const code = document.getElementById('game-code-input').value.trim();
+                if (!title || !code) return;
+                const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
+                const id = editingGameId || `game-${Date.now()}`;
+                games[id] = { 
+                    gameTitle: title, 
+                    gameCode: code, 
+                    creatorUsername: userData.username, 
+                    thumbnail: currentThumbnailDataURL, 
+                    tag: tag 
+                };
+                localStorage.setItem(PUBLISHED_GAMES_KEY, JSON.stringify(games));
+                if (!editingGameId) {
+                    stats.gamesCreated++;
+                    achievements.firstGamePublished = true;
+                }
+                saveStats(); 
+                saveAchievements();
+                renderGameList();
+                resetStudio();
+            };
+
+            document.getElementById('use-avatar-thumbnail-btn').onclick = () => {
+                currentThumbnailDataURL = canvas.toDataURL();
+                document.getElementById('thumbnail-preview-container').innerHTML = `<img src="${currentThumbnailDataURL}" class="w-full h-full object-cover">`;
+            };
+
+            document.getElementById('download-game-btn').onclick = () => {
+                const title = document.getElementById('game-title-input').value.trim() || 'game';
+                const tag = document.getElementById('game-tag-input').value;
+                const code = document.getElementById('game-code-input').value.trim();
+                const data = { gameTitle: title, gameCode: code, creatorUsername: userData.username, thumbnail: currentThumbnailDataURL, tag: tag };
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${title}.bread`;
+                a.click();
+            };
+
+            document.getElementById('import-game-btn').onclick = () => document.getElementById('import-game-file').click();
+            document.getElementById('import-game-file').onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        if (data.gameTitle && data.gameCode) {
+                            const games = JSON.parse(localStorage.getItem(PUBLISHED_GAMES_KEY) || '{}');
+                            games[`game-${Date.now()}`] = data;
+                            localStorage.setItem(PUBLISHED_GAMES_KEY, JSON.stringify(games));
+                            renderGameList();
+                        }
+                    } catch (err) {}
+                };
+                reader.readAsText(file);
+            };
+
+            document.getElementById('thumbnail-upload').onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    currentThumbnailDataURL = ev.target.result;
+                    document.getElementById('thumbnail-preview-container').innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
+            };
+
+            document.getElementById('nuke-data-btn').onclick = () => {
+                if(confirm("Wipe all data? This cannot be undone.")) { localStorage.clear(); location.reload(); }
+            };
         });
     </script>
 </body>
